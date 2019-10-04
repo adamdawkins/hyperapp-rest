@@ -38,6 +38,11 @@ core-js@^2.4.0:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.9.tgz#6b4b214620c834152e179323727fc19741b084f2"
   integrity sha512-HOpZf6eXmnl7la+cUdMnLvUxKNqLUzJvgIziQ0DiF3JwSImNphIqdGqzj6hIKyX04MmV0poclQ7+wjWvxQyR2A==
 
+hyperapp-fx@^2.0.0-beta.1:
+  version "2.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/hyperapp-fx/-/hyperapp-fx-2.0.0-beta.1.tgz#ba8cec6ef83358b65451b12fca34b7b2d0e18b3c"
+  integrity sha512-YVzRLwPR1iN1TfpQmCwmSId3qMFr1RKyNgfC01buY0HuAAxzVg/Z/NDsgH8ezERzIm56zIYzYsqQft+Bl1lWPw==
+
 hyperapp@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/hyperapp/-/hyperapp-2.0.1.tgz#34a9a0ded0c18c979a6ddcb15633c616da91c905"
