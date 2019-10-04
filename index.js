@@ -1,6 +1,10 @@
 import {app} from 'hyperapp';
 import {textarea, div, h2, form, button, p} from '@hyperapp/html';
 import {preventDefault, targetValue} from '@hyperapp/events';
+// UTILITIES
+const pluralize = word => word.concat('s');
+const capitalize = word => word.charAt(0).toUpperCase() + word.slice(1);
+
 
 // Helpers
 const nextNoteId = state => Object.keys(state.notes).length + 1;
@@ -35,11 +39,13 @@ app({
   },
   view: state => {
     console.log({state});
-      console.log(Object.entries(state.notes))
 
     return div({}, [
       form({onsubmit: preventDefault(CreateNote)}, [
-        textarea({onchange: [setNoteContent, targetValue]}),
+        textarea({
+          oninput: [setNoteContent, targetValue],
+          value: state.newNote.content,
+        }),
         button('Create Note'),
       ]),
       Object.entries(state.notes).map(Note),
