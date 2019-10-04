@@ -3,6 +3,8 @@ import {textarea, div, h2, form, button, p} from '@hyperapp/html';
 import {preventDefault, targetValue} from '@hyperapp/events';
 import {Http} from 'hyperapp-fx';
 
+const SERVER_URL = 'https://intense-plateau-18988.herokuapp.com';
+
 // UTILITIES
 const pluralize = word => word.concat('s');
 const capitalize = word => word.charAt(0).toUpperCase() + word.slice(1);
@@ -20,7 +22,7 @@ const Create = (state, [resourceName, resource]) => [
   //   {...resource, id: nextId(state, resourceName)},
   // ]),
   Http({
-    url: `http://localhost:3000/${pluralize(resourceName)}`,
+    url: `${SERVER_URL}/${pluralize(resourceName)}`,
     options: {
       method: 'POST',
       body: `{ "${resourceName}": ${JSON.stringify(resource)} }`,
