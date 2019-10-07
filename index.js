@@ -3,6 +3,7 @@ import {textarea, div, h2, form, button, p} from '@hyperapp/html';
 import {preventDefault, targetValue} from '@hyperapp/events';
 import {Http} from 'hyperapp-fx';
 
+
 // UTILITIES
 
 const capitalize = word => word.charAt(0).toUpperCase() + word.slice(1);
@@ -33,6 +34,8 @@ const set = curry((prop, value, source) => {
 
   return result;
 });
+
+const append = (x, xs) => xs.concat([x])
 
 const REST = {
   init(state, {resources, endpoint}) {
@@ -70,31 +73,34 @@ REST.actions.UpdateCollection = curry((resourceName, state, resources) =>
 // const SERVER_URL = 'https://intense-plateau-18988.herokuapp.com';
 
 // Events
-const Create = (state, [resourceName, resource]) => [
-  state,
-  // Optimistic state update causing problems when we get the real thing from the server
-  // AddResourceToState(state, [
-  //   resourceName,
-  //   {...resource, id: nextId(state, resourceName)},
-  // ]),
-  Http({
-    url: `${SERVER_URL}/${pluralize(resourceName)}`,
-    options: {
-      method: 'POST',
-      body: `{ "${resourceName}": ${JSON.stringify(resource)} }`,
-      headers: {'Content-Type': 'application/json'},
-    },
-    action(state, response) {
-      return AddResourceToState(state, [resourceName, response]);
-    },
-    error(state, err) {
-      return RemoveResourceFromState(state, [
-        resourceName,
-        lastId(state, resourceName),
-      ]);
-    },
-  }),
-];
+REST.fx.create = (state, [resourceName, resource]) => {
+  console.log('REST.fx.create', {state, resourceName, resource});
+  return [
+    state,
+    // Optimistic state update causing problems when we get the real thing from the server
+    // AddResourceToState(state, [
+    //   resourceName,
+    //   {...resource, id: nextId(state, resourceName)},
+    // ]),
+    Http({
+      url: `${HYPERAPP_REST.endpoint}/${pluralize(resourceName)}`,
+      options: {
+        method: 'POST',
+        body: `{ "${resourceName}": ${JSON.stringify(resource)} }`,
+        headers: {'Content-Type': 'application/json'},
+      },
+      action(state, response) {
+        return REST.AddResourceToState(state, [resourceName, response]);
+      },
+      error(state, err) {
+        return RemoveResourceFromState(state, [
+          resourceName,
+          lastId(state, resourceName),
+        ]);
+      },
+    }),
+  ];
+};
 
 const nextId = (state, resourceName) =>
   Object.keys(state[pluralize(resourceName)]).length + 1;
@@ -108,14 +114,16 @@ const setNoteContent = (state, content) => ({
   newNote: {content},
 });
 
-const AddResourceToState = (state, [resourceName, resource]) => ({
-  ...state,
-  [pluralize(resourceName)]: {
-    ...state[pluralize(resourceName)],
-    [resource.id]: resource,
-  },
-  [`new${capitalize(resourceName)}`]: {},
-});
+REST.AddResourceToState = (state, [resourceName, resource]) =>
+  set(
+    `new${capitalize(resourceName)}`,
+    {},
+    set(
+      pluralize(resourceName),
+      append(resource, state[pluralize(resourceName)]),
+      state,
+    ),
+  );
 
 const RemoveResourceFromState = (state, [resourceName, resourceId]) => ({
   ...state,
@@ -125,7 +133,10 @@ const RemoveResourceFromState = (state, [resourceName, resourceId]) => ({
   ),
 });
 
-const CreateNote = state => [Create, ['note', state.newNote]];
+REST.actions.create = (state, resourceName) => [
+  REST.fx.create,
+  [resourceName, state.newNote],
+];
 
 // VIEWS
 const Note = note => div({class: 'note'}, [h2(note.id), p(note.content)]);
@@ -148,7 +159,7 @@ app({
   view: state => {
     console.log({state});
     return div({}, [
-      form({onsubmit: preventDefault(CreateNote)}, [
+      form({onsubmit: preventDefault([REST.actions.create, 'note'])}, [
         textarea({
           oninput: [setNoteContent, targetValue],
           // value: state.newNote.content,
