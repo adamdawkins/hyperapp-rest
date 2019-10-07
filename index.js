@@ -3,7 +3,6 @@ import {textarea, div, h2, form, button, p} from '@hyperapp/html';
 import {preventDefault, targetValue} from '@hyperapp/events';
 import {Http} from 'hyperapp-fx';
 
-
 // UTILITIES
 
 const capitalize = word => word.charAt(0).toUpperCase() + word.slice(1);
@@ -35,7 +34,9 @@ const set = curry((prop, value, source) => {
   return result;
 });
 
-const append = (x, xs) => xs.concat([x])
+const append = (x, xs) => xs.concat([x]);
+
+const includes = (x, xs) => xs.indexOf(x) > -1;
 
 const REST = {
   init(state, {resources, endpoint}) {
@@ -43,7 +44,14 @@ const REST = {
       resources,
       endpoint,
     };
-    return state;
+
+    const _rest = {};
+    Object.entries(resources).forEach(([resource, actions]) => {
+      if (includes('create', actions)) {
+        _rest[resource] = {_new: {}};
+      }
+    });
+    return set('_rest', _rest, state);
   },
 };
 
@@ -65,6 +73,20 @@ REST.fx.index = resourceName => {
 };
 
 REST.collection = REST.fx.index;
+
+REST.setNewProp = curry((resourceName, prop, state, value) => ({
+  ...state,
+  _rest: {
+    ...state._rest,
+    [pluralize(resourceName)]: {
+      ...state[pluralize(resourceName)],
+      _new: {
+        ...state[pluralize(resourceName)]['_new'],
+        [prop]: value,
+      },
+    },
+  },
+}));
 
 REST.actions.UpdateCollection = curry((resourceName, state, resources) =>
   set(resourceName, resources, state),
@@ -114,6 +136,9 @@ const setNoteContent = (state, content) => ({
   newNote: {content},
 });
 
+REST.newProp = (resource, prop, state) =>
+  state['_rest'][pluralize(resource)]['_new'][prop];
+
 REST.AddResourceToState = (state, [resourceName, resource]) =>
   set(
     `new${capitalize(resourceName)}`,
@@ -135,7 +160,7 @@ const RemoveResourceFromState = (state, [resourceName, resourceId]) => ({
 
 REST.actions.create = (state, resourceName) => [
   REST.fx.create,
-  [resourceName, state.newNote],
+  [resourceName, state._rest[pluralize(resourceName)]._new],
 ];
 
 // VIEWS
@@ -161,8 +186,8 @@ app({
     return div({}, [
       form({onsubmit: preventDefault([REST.actions.create, 'note'])}, [
         textarea({
-          oninput: [setNoteContent, targetValue],
-          // value: state.newNote.content,
+          oninput: [REST.setNewProp('note', 'content'), targetValue],
+          value: REST.newProp('note', 'content', state),
         }),
         button('Create Note'),
       ]),
